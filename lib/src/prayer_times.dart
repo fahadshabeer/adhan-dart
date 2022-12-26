@@ -12,33 +12,33 @@ import 'prayer.dart';
 import 'dart:math';
 
 class PrayerTimes {
-  DateTime _fajr;
-  DateTime _zawal;
-  DateTime get zawal=> _zawal;
-  DateTime get fajr => _fajr;
+  DateTime? _fajr;
+  DateTime? _zawal;
+  DateTime? get zawal=> _zawal;
+  DateTime? get fajr => _fajr;
 
-  DateTime _sunrise;
-  DateTime get sunrise => _sunrise;
+  DateTime? _sunrise;
+  DateTime? get sunrise => _sunrise;
 
-  DateTime _dhuhr;
-  DateTime get dhuhr => _dhuhr;
+  DateTime? _dhuhr;
+  DateTime? get dhuhr => _dhuhr;
 
-  DateTime _asr;
-  DateTime get asr => _asr;
+  DateTime? _asr;
+  DateTime? get asr => _asr;
 
-  DateTime _maghrib;
-  DateTime get maghrib => _maghrib;
+  DateTime? _maghrib;
+  DateTime? get maghrib => _maghrib;
 
-  DateTime _isha;
-  DateTime get isha => _isha;
+  DateTime? _isha;
+  DateTime? get isha => _isha;
 
   // If you give a UTC Offset then Prayer Times will convert local(with device timezone) time
   // to UTC and then add the offset.
   final Duration utcOffset;
 
-  final Coordinates coordinates;
+  late Coordinates coordinates;
 
-  DateComponents _dateComponents;
+  late DateComponents _dateComponents;
 
   DateComponents get dateComponents => _dateComponents;
 
@@ -52,7 +52,7 @@ class PrayerTimes {
   /// [calculationParameters] the parameters for the calculation
   factory PrayerTimes(Coordinates coordinates, DateComponents dateComponents,
       CalculationParameters calculationParameters,
-      {Duration utcOffset}) {
+      {required Duration utcOffset}) {
     return PrayerTimes._(
         coordinates,
         CalendarUtil.resolveTimeByDateComponents(dateComponents),
@@ -67,13 +67,13 @@ class PrayerTimes {
   /// [calculationParameters] the parameters for the calculation
   factory PrayerTimes.today(
       Coordinates coordinates, CalculationParameters calculationParameters,
-      {Duration utcOffset}) {
+      { Duration? utcOffset}) {
     return PrayerTimes._(
         coordinates,
         CalendarUtil.resolveTimeByDateComponents(
             DateComponents.from(DateTime.now())),
         calculationParameters,
-        utcOffset: utcOffset);
+        utcOffset: utcOffset!);
   }
 
   /// Calculate PrayerTimes and Output UTC Times.
@@ -109,17 +109,18 @@ class PrayerTimes {
         utcOffset: utcOffset);
   }
 
-  PrayerTimes._(this.coordinates, DateTime _date, this.calculationParameters,
-      {this.utcOffset}) {
+  PrayerTimes._(
+      this.coordinates, DateTime _date, this.calculationParameters,
+      {required this.utcOffset}) {
     final date = _date.toUtc();
     _dateComponents = DateComponents.from(date);
 
-    DateTime tempFajr;
-    DateTime tempSunrise;
-    DateTime tempDhuhr;
-    DateTime tempAsr;
-    DateTime tempMaghrib;
-    DateTime tempIsha;
+    DateTime? tempFajr;
+    DateTime? tempSunrise;
+    DateTime? tempDhuhr;
+    DateTime? tempAsr;
+    DateTime? tempMaghrib;
+    DateTime? tempIsha;
 
     final year = date.year;
     final dayOfYear = date.dayOfYear;
@@ -152,7 +153,7 @@ class PrayerTimes {
       tempSunrise = sunriseComponents;
 
       timeComponents = TimeComponents.fromDouble(
-          solarTime.afternoon(calculationParameters.madhab.getShadowLength()));
+          solarTime.afternoon(calculationParameters.madhab!.getShadowLength()));
       if (timeComponents != null) {
         tempAsr = timeComponents.dateComponents(date);
       }
@@ -164,7 +165,7 @@ class PrayerTimes {
           sunsetComponents.millisecondsSinceEpoch;
 
       timeComponents = TimeComponents.fromDouble(
-          solarTime.hourAngle(-calculationParameters.fajrAngle, false));
+          solarTime.hourAngle(-calculationParameters.fajrAngle!, false));
       if (timeComponents != null) {
         tempFajr = timeComponents.dateComponents(date);
       }
@@ -193,12 +194,12 @@ class PrayerTimes {
       }
 
       // Isha calculation with check against safe value
-      if (calculationParameters.ishaInterval > 0) {
+      if (calculationParameters.ishaInterval!=null?calculationParameters.ishaInterval! > 0 : false) {
         tempIsha = sunsetComponents
-            .add(Duration(seconds: calculationParameters.ishaInterval * 60));
+            .add(Duration(seconds: (calculationParameters.ishaInterval??0) * 60));
       } else {
         timeComponents = TimeComponents.fromDouble(
-            solarTime.hourAngle(-calculationParameters.ishaAngle, true));
+            solarTime.hourAngle(-(calculationParameters.ishaAngle??0), true));
         if (timeComponents != null) {
           tempIsha = timeComponents.dateComponents(date);
         }
@@ -230,10 +231,10 @@ class PrayerTimes {
     tempMaghrib = sunsetComponents;
     if (calculationParameters.maghribAngle != null) {
       final angleBasedMaghrib = TimeComponents.fromDouble(solarTime.hourAngle(
-              -1 * calculationParameters.maghribAngle, true))
-          .dateComponents(date);
-      if (sunsetComponents.isBefore(angleBasedMaghrib) &&
-          tempIsha.isAfter(angleBasedMaghrib)) {
+              -1 * (calculationParameters.maghribAngle??0), true))
+          !.dateComponents(date);
+      if (sunsetComponents!.isBefore(angleBasedMaghrib) &&
+          tempIsha!.isAfter(angleBasedMaghrib)) {
         tempMaghrib = angleBasedMaghrib;
       }
     }
@@ -250,39 +251,39 @@ class PrayerTimes {
       // Assign final times to public struct members with all offsets
 
       _fajr = CalendarUtil.roundedMinute(tempFajr
-          .add(Duration(minutes: calculationParameters.adjustments.fajr))
-          .add(Duration(minutes: calculationParameters.methodAdjustments.fajr))
+          !.add(Duration(minutes: calculationParameters.adjustments!.fajr))
+          .add(Duration(minutes: calculationParameters.methodAdjustments!.fajr))
           .toLocal());
       _sunrise = CalendarUtil.roundedMinute(tempSunrise
-          .add(Duration(minutes: calculationParameters.adjustments.sunrise))
+          !.add(Duration(minutes: calculationParameters.adjustments!.sunrise))
           .add(Duration(
-              minutes: calculationParameters.methodAdjustments.sunrise))
+              minutes: calculationParameters.methodAdjustments!.sunrise))
           .toLocal());
       _dhuhr = CalendarUtil.roundedMinute(tempDhuhr
-          .add(Duration(minutes: calculationParameters.adjustments.dhuhr))
-          .add(Duration(minutes: calculationParameters.methodAdjustments.dhuhr))
+          !.add(Duration(minutes: calculationParameters.adjustments!.dhuhr))
+          .add(Duration(minutes: calculationParameters.methodAdjustments!.dhuhr))
           .toLocal());
       _asr = CalendarUtil.roundedMinute(tempAsr
-          .add(Duration(minutes: calculationParameters.adjustments.asr))
-          .add(Duration(minutes: calculationParameters.methodAdjustments.asr))
+          .add(Duration(minutes: calculationParameters.adjustments!.asr))
+          .add(Duration(minutes: calculationParameters.methodAdjustments!.asr))
           .toLocal());
-      _maghrib = CalendarUtil.roundedMinute(tempMaghrib
-          .add(Duration(minutes: calculationParameters.adjustments.maghrib))
+      _maghrib = CalendarUtil.roundedMinute(tempMaghrib!
+          .add(Duration(minutes: calculationParameters.adjustments!.maghrib))
           .add(Duration(
-              minutes: calculationParameters.methodAdjustments.maghrib))
+              minutes: calculationParameters.methodAdjustments!.maghrib))
           .toLocal());
       _isha = CalendarUtil.roundedMinute(tempIsha
-          .add(Duration(minutes: calculationParameters.adjustments.isha))
-          .add(Duration(minutes: calculationParameters.methodAdjustments.isha))
+      !.add(Duration(minutes: calculationParameters.adjustments!.isha))
+          .add(Duration(minutes: calculationParameters.methodAdjustments!.isha))
           .toLocal());
 
       if (utcOffset != null) {
-        _fajr = fajr.toUtc().add(utcOffset);
-        _sunrise = sunrise.toUtc().add(utcOffset);
-        _dhuhr = dhuhr.toUtc().add(utcOffset);
-        _asr = asr.toUtc().add(utcOffset);
-        _maghrib = maghrib.toUtc().add(utcOffset);
-        _isha = isha.toUtc().add(utcOffset);
+        _fajr = fajr!.toUtc().add(utcOffset);
+        _sunrise = sunrise!.toUtc().add(utcOffset);
+        _dhuhr = dhuhr!.toUtc().add(utcOffset);
+        _asr = asr!.toUtc().add(utcOffset);
+        _maghrib = maghrib!.toUtc().add(utcOffset);
+        _isha = isha!.toUtc().add(utcOffset);
       }
     }
   }
@@ -293,17 +294,17 @@ class PrayerTimes {
 
   Prayer currentPrayerByDateTime(DateTime time) {
     final when = time.millisecondsSinceEpoch;
-    if (isha.millisecondsSinceEpoch - when <= 0) {
+    if (isha!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.isha;
-    } else if (maghrib.millisecondsSinceEpoch - when <= 0) {
+    } else if (maghrib!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.maghrib;
-    } else if (asr.millisecondsSinceEpoch - when <= 0) {
+    } else if (asr!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.asr;
-    } else if (dhuhr.millisecondsSinceEpoch - when <= 0) {
+    } else if (dhuhr!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.dhuhr;
-    } else if (sunrise.millisecondsSinceEpoch - when <= 0) {
+    } else if (sunrise!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.sunrise;
-    } else if (fajr.millisecondsSinceEpoch - when <= 0) {
+    } else if (fajr!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.fajr;
     } else {
       return Prayer.none;
@@ -316,24 +317,24 @@ class PrayerTimes {
 
   Prayer nextPrayerByDateTime(DateTime time) {
     final when = time.millisecondsSinceEpoch;
-    if (isha.millisecondsSinceEpoch - when <= 0) {
+    if (isha!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.none;
-    } else if (maghrib.millisecondsSinceEpoch - when <= 0) {
+    } else if (maghrib!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.isha;
-    } else if (asr.millisecondsSinceEpoch - when <= 0) {
+    } else if (asr!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.maghrib;
-    } else if (dhuhr.millisecondsSinceEpoch - when <= 0) {
+    } else if (dhuhr!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.asr;
-    } else if (sunrise.millisecondsSinceEpoch - when <= 0) {
+    } else if (sunrise!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.dhuhr;
-    } else if (fajr.millisecondsSinceEpoch - when <= 0) {
+    } else if (fajr!.millisecondsSinceEpoch - when <= 0) {
       return Prayer.sunrise;
     } else {
       return Prayer.fajr;
     }
   }
 
-  DateTime timeForPrayer(Prayer prayer) {
+  DateTime? timeForPrayer(Prayer prayer) {
     switch (prayer) {
       case Prayer.fajr:
         return fajr;

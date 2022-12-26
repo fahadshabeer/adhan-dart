@@ -4,14 +4,14 @@ import 'data/date_components.dart';
 
 class SunnahTimes {
   /// The midpoint between Maghrib and Fajr
-  DateTime _middleOfTheNight;
+  late DateTime _middleOfTheNight;
 
   /// The midpoint between Maghrib and Fajr
   DateTime get middleOfTheNight => _middleOfTheNight;
 
   /// The beginning of the last third of the period between Maghrib and Fajr,
   /// a recommended time to perform Qiyam
-  DateTime _lastThirdOfTheNight;
+  late DateTime _lastThirdOfTheNight;
 
   /// The beginning of the last third of the period between Maghrib and Fajr,
   /// a recommended time to perform Qiyam
@@ -32,14 +32,14 @@ class SunnahTimes {
         utcOffset: prayerTimes.utcOffset);
 
     final nightDurationInSeconds =
-        (tomorrowPrayerTimes.fajr.millisecondsSinceEpoch -
-                prayerTimes.maghrib.millisecondsSinceEpoch) ~/
+        (tomorrowPrayerTimes.fajr!.millisecondsSinceEpoch -
+                prayerTimes.maghrib!.millisecondsSinceEpoch) ~/
             1000;
 
     _middleOfTheNight = CalendarUtil.roundedMinute(prayerTimes.maghrib
-        .add(Duration(seconds: nightDurationInSeconds ~/ 2.0)));
+        !.add(Duration(seconds: nightDurationInSeconds ~/ 2.0)));
 
-    _lastThirdOfTheNight = CalendarUtil.roundedMinute(prayerTimes.maghrib.add(
+    _lastThirdOfTheNight = CalendarUtil.roundedMinute(prayerTimes.maghrib!.add(
         Duration(seconds: (nightDurationInSeconds * (2.0 / 3.0)).toInt())));
   }
 }
