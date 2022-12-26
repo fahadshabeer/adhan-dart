@@ -9,9 +9,12 @@ import 'data/time_components.dart';
 import 'internal/solar_time.dart';
 import 'madhab.dart';
 import 'prayer.dart';
+import 'dart:math';
 
 class PrayerTimes {
   DateTime _fajr;
+  DateTime _zawal;
+  DateTime get zawal=> _zawal;
   DateTime get fajr => _fajr;
 
   DateTime _sunrise;
@@ -245,6 +248,7 @@ class PrayerTimes {
       _isha = null;
     } else {
       // Assign final times to public struct members with all offsets
+
       _fajr = CalendarUtil.roundedMinute(tempFajr
           .add(Duration(minutes: calculationParameters.adjustments.fajr))
           .add(Duration(minutes: calculationParameters.methodAdjustments.fajr))
@@ -420,5 +424,25 @@ class PrayerTimes {
       }
     }
     return daysSinceSolistice;
+  }
+
+
+
+
+  DateTime calculateSolarTime(DateTime dateTime, double latitude, double longitude) {
+    // Calculate the number of days since the start of the year
+    final daysSinceStartOfYear = dateTime.difference(DateTime(dateTime.year, 1, 1)).inDays;
+
+    // Calculate the solar declination angle (the angle between the sun's rays and the Earth's surface)
+    final solarDeclination = 0.409 * sin(2 * pi * (daysSinceStartOfYear - 80) / 365.25);
+
+    // Calculate the solar hour angle (the angle between the sun and the meridian at a given location)
+    final solarHourAngle = pi / 12 * (dateTime.hour + dateTime.minute / 60 + dateTime.second / 3600 - 12);
+
+    // Calculate the solar time (the time of the day when the sun is at its highest point in the sky)
+    final solarTime = 12 + (longitude - 15 * dateTime.timeZoneOffset.inHours) / 15 - solarHourAngle * cos(solarDeclination) / pi;
+
+    // Return the solar time as a DateTime object
+    return DateTime.utc(dateTime.year, dateTime.month, dateTime.day, solarTime.floor(), ((solarTime - solarTime.floor()) * 60).toInt()).toLocal();
   }
 }

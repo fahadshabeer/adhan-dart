@@ -1,10 +1,12 @@
+import 'dart:math';
+
 import 'package:adhan/adhan.dart';
 import 'package:intl/intl.dart';
 
 void main() {
   print('Kushtia Prayer Times');
   final myCoordinates =
-      Coordinates(23.9088, 89.1220); // Replace with your own location lat, lng.
+      Coordinates(34.006962,71.533058); // Replace with your own location lat, lng.
   final params = CalculationMethod.karachi.getParameters();
   params.madhab = Madhab.hanafi;
   final prayerTimes = PrayerTimes.today(myCoordinates, params);
@@ -17,6 +19,8 @@ void main() {
   print(DateFormat.jm().format(prayerTimes.asr));
   print(DateFormat.jm().format(prayerTimes.maghrib));
   print(DateFormat.jm().format(prayerTimes.isha));
+  final solarTime = DateTime.utc(2022, 12, 26, 12);
+  print(DateFormat.jm().format(calculateSolarTime(solarTime,34.006962,71.533058).subtract(Duration(minutes: 30))));
 
   print('---');
 
@@ -37,4 +41,22 @@ void main() {
   print(DateFormat.jm().format(nyPrayerTimes.asr));
   print(DateFormat.jm().format(nyPrayerTimes.maghrib));
   print(DateFormat.jm().format(nyPrayerTimes.isha));
+
+
+}
+DateTime calculateSolarTime(DateTime dateTime, double latitude, double longitude) {
+  // Calculate the number of days since the start of the year
+  final daysSinceStartOfYear = dateTime.difference(DateTime(dateTime.year, 1, 1)).inDays;
+
+  // Calculate the solar declination angle (the angle between the sun's rays and the Earth's surface)
+  final solarDeclination = 0.409 * sin(2 * pi * (daysSinceStartOfYear - 80) / 365.25);
+
+  // Calculate the solar hour angle (the angle between the sun and the meridian at a given location)
+  final solarHourAngle = pi / 12 * (dateTime.hour + dateTime.minute / 60 + dateTime.second / 3600 - 12);
+
+  // Calculate the solar time (the time of the day when the sun is at its highest point in the sky)
+  final solarTime = 12 + (longitude - 15 * dateTime.timeZoneOffset.inHours) / 15 - solarHourAngle * cos(solarDeclination) / pi;
+
+  // Return the solar time as a DateTime object
+  return DateTime.utc(dateTime.year, dateTime.month, dateTime.day, solarTime.floor(), ((solarTime - solarTime.floor()) * 60).toInt()).toLocal();
 }
