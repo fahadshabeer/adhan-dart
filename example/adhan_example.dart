@@ -7,7 +7,6 @@ void main() {
 
   final myCoordinates =
       Coordinates(34.006962,71.533058); // Replace with your own location lat, lng.
-  final nyUtcOffset = Duration(hours: 5);
   final params = CalculationMethod.karachi.getParameters();
   params.madhab = Madhab.hanafi;
   final prayerTimes = PrayerTimes.today(myCoordinates, params,utcOffset: DateTime.now().timeZoneOffset);
@@ -20,6 +19,7 @@ void main() {
   print(DateFormat.jm().format(prayerTimes.asr!));
   print(DateFormat.jm().format(prayerTimes.maghrib!));
   print(DateFormat.jm().format(prayerTimes.isha!));
+  print(DateFormat.jm().format(prayerTimes.calculateSolarTime(DateTime.now(), 34.006962, 71.533058)));
 
   print('---');
 

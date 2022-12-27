@@ -444,6 +444,6 @@ class PrayerTimes {
     final solarTime = 12 + (longitude - 15 * dateTime.timeZoneOffset.inHours) / 15 - solarHourAngle * cos(solarDeclination) / pi;
 
     // Return the solar time as a DateTime object
-    return DateTime.utc(dateTime.year, dateTime.month, dateTime.day, solarTime.floor(), ((solarTime - solarTime.floor()) * 60).toInt()).toLocal();
+    return DateTime.utc(dateTime.year, dateTime.month, dateTime.day, solarTime.floor(), ((solarTime - solarTime.floor()) * 60).toInt());
   }
 }
